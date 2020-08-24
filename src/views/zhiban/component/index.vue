@@ -5,6 +5,7 @@
       <el-button class="el-button el-button--primary" @click="previousWeek">上一周</el-button>
       <el-button class="el-button el-button--primary" @click="thisWeek">本周</el-button>
       <el-button class="el-button el-button--primary" @click="nextWeek">下一周</el-button>
+      <el-button class="el-button el-button--primary" @click="addNew" v-if="isEdit">增加</el-button>
       <el-button v-if="isEdit&&dataList.length==0" class="el-button el-button--primary" @click="generateWeek">生成周计划</el-button>
       <el-date-picker
         v-model="weekSelect"
@@ -19,7 +20,8 @@
     <el-table v-loading="isLoading" style="width: 100%" border="true" class="" :data="dataList">
       <el-table-column label="姓名" align="center">
         <template slot-scope="{row}">
-          <span>{{ row.name }}</span>
+          <el-input v-if="row.edit" v-model="row.name"></el-input>
+          <span v-else>{{ row.name }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="'星期一('+times[0]+')'" align="center">
@@ -107,21 +109,21 @@
         </template>
       </el-table-column>
       <el-table-column v-if="isEdit" align="center" label="操作" width="220">
-        <template slot-scope="{row}">
+        <template slot-scope="scope">
           <el-button
-            v-if="row.edit"
+            v-if="scope.row.edit"
             type="success"
             size="small"
             icon="el-icon-circle-check"
-            @click="confirmEdit(row)"
+            @click="confirmEdit(scope.row)"
           >
             ok
           </el-button>
           <el-button
-            v-if="row.edit"
+            v-if="scope.row.edit"
             type="info"
             size="small"
-            @click="cancelEdit(row)"
+            @click="cancelEdit(scope.row,scope.$index)"
           >cancel
           </el-button>
           <el-button
@@ -129,7 +131,7 @@
             type="primary"
             size="small"
             icon="el-icon-edit"
-            @click="row.edit=!row.edit"
+            @click="scope.row.edit=!scope.row.edit"
           >
             Edit
           </el-button>
@@ -140,7 +142,7 @@
 </template>
 
 <script>
-import { getList, editDataApi } from '@/api/zhiban'
+import { getList, editDataApi,addDataApi} from '@/api/zhiban'
 export default {
   name: 'Zhiban',
   filters: {
@@ -188,19 +190,37 @@ export default {
     this.fetchList()
   },
   methods: {
+    addNew(){
+      let newRow={id:'',name:'',one:'',two:'',three:'',four:'',five:'',six:'',seven:'',startDate:this.times[0],endDate:this.times[6],edit:true};
+      this.dataList.push(newRow);
+    },
     confirmEdit(row) {
       this.isLoading = true
-      editDataApi(row).then(resp => {
-        row.edit = false
-        this.fetchList()
-        this.$message({
-          message: 'The title has been edited',
-          type: 'success'
+      if(row.id===''){
+        addDataApi(row).then(resp=>{
+          row.edit = false
+          this.fetchList()
+          this.$message({
+            message: 'The title has been edited',
+            type: 'success'
+          })
         })
-      })
+      }else {
+        editDataApi(row).then(resp => {
+          row.edit = false
+          this.fetchList()
+          this.$message({
+            message: 'The title has been edited',
+            type: 'success'
+          })
+        })
+      }
     },
-    cancelEdit(row) {
+    cancelEdit(row,index) {
       row.edit = false
+      if(row.id==='') {
+        this.dataList.splice(index, 1);
+      }
     },
     previousWeek() {
       this.isLoading = true

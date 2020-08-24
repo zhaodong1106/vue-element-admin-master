@@ -16,9 +16,9 @@ export function editDataApi(data) {
   })
 }
 
-export function addRole(data) {
+export function addDataApi(data) {
   return request({
-    url: '/vue-element-admin/role',
+    url: '/zhiban/addData',
     method: 'post',
     data
   })
